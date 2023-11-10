@@ -20,8 +20,8 @@ The queue model of MQTT needs to be based on the light message queue feature ([R
 For the quick start of light message queue, please refer to [Example_LMQ](https://github.com/apache/rocketmq/blob/develop/docs/cn/Example_LMQ.md) of RocketMQ. 
 For example, set the following parameters to true in broker.conf
 ```
-enableLmq = true
-enableMultiDispatch = true
+enableLmq=true
+enableMultiDispatch=true
 ```
 
 
