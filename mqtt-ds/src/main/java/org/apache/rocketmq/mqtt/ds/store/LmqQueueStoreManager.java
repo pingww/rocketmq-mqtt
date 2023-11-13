@@ -80,6 +80,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Component
@@ -91,6 +92,7 @@ public class LmqQueueStoreManager implements LmqQueueStore {
     private DefaultMQProducer defaultMQProducer;
     private String consumerGroup = MixAll.CID_RMQ_SYS_PREFIX + "LMQ_PULL";
     private Map<String, Set<String>> topic2Brokers = new ConcurrentHashMap<>();
+    private AtomicLong rid = new AtomicLong(0);
 
     @Resource
     private ServiceConf serviceConf;
@@ -205,7 +207,14 @@ public class LmqQueueStoreManager implements LmqQueueStore {
                         MixAll.MULTI_DISPATCH_QUEUE_SPLITTER));
         try {
             long start = System.currentTimeMillis();
+            Set<String> set = firstTopicManager.getWriteableBrokers(mqMessage.getTopic());
+            if (rid.get() >= Long.MAX_VALUE - 1) {
+                rid.set(0);
+            }
+            String broker = new ArrayList<>(set).get((int) (rid.incrementAndGet() % set.size()));
+            MessageQueue messageQueue = new MessageQueue(mqMessage.getTopic(), broker, 0);
             defaultMQProducer.send(mqMessage,
+                    messageQueue,
                     new SendCallback() {
                         @Override
                         public void onSuccess(SendResult sendResult) {

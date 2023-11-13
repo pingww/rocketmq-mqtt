@@ -53,6 +53,8 @@ public class FirstTopicManager {
     private DefaultMQAdminExt defaultMQAdminExt;
     private Map<String, Map<String, String>> brokerAddressMap = new ConcurrentHashMap<>();
     private Map<String, Set<String>> readableBrokers = new ConcurrentHashMap<>();
+    private Map<String, Set<String>> writeableBrokers = new ConcurrentHashMap<>();
+
     private ScheduledThreadPoolExecutor scheduler;
 
     @Resource
@@ -138,13 +140,18 @@ public class FirstTopicManager {
             tmp.put(brokerData.getBrokerName(), brokerData.getBrokerAddrs().get(MixAll.MASTER_ID));
         }
         brokerAddressMap.put(firstTopic, tmp);
-        Set<String> tmpBrokers = new HashSet<>();
+        Set<String> tmpReadBrokers = new HashSet<>();
+        Set<String> tmpWriteBrokers = new HashSet<>();
         for (QueueData qd : topicRouteData.getQueueDatas()) {
             if (PermName.isReadable(qd.getPerm())) {
-                tmpBrokers.add(qd.getBrokerName());
+                tmpReadBrokers.add(qd.getBrokerName());
+            }
+            if (PermName.isWriteable(qd.getPerm())) {
+                tmpWriteBrokers.add(qd.getBrokerName());
             }
         }
-        readableBrokers.put(firstTopic, tmpBrokers);
+        readableBrokers.put(firstTopic, tmpReadBrokers);
+        writeableBrokers.put(firstTopic, tmpWriteBrokers);
     }
 
     public Map<String, String> getBrokerAddressMap(String firstTopic) {
@@ -159,6 +166,15 @@ public class FirstTopicManager {
     public Set<String> getReadableBrokers(String firstTopic) {
         Set<String> copy = new HashSet<>();
         Set<String> set = readableBrokers.get(firstTopic);
+        if (set != null) {
+            copy.addAll(set);
+        }
+        return copy;
+    }
+
+    public Set<String> getWriteableBrokers(String firstTopic) {
+        Set<String> copy = new HashSet<>();
+        Set<String> set = writeableBrokers.get(firstTopic);
         if (set != null) {
             copy.addAll(set);
         }
